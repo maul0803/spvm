@@ -105,16 +105,23 @@ int main(int argc, char *argv[])
   else
     printf("Result is wrong!\n");
 
-
   //
   // Let's try now SpmV: Sparse Matrix - Dense Vector computation
   //
-
+  my_sparse(size, mat, vec, mysol);
   // Convert mat to a sparse format: CSR
 
   //
   // Sparse computation using CSPARSE
   //
+
+  timestamp(&now);
+  printf("Time taken by my dense matrix - vector product: %ld ms\n", diff_milli(&start, &now));
+
+  if (check_result(refsol, mysol, size) == 1)
+      printf("Result is ok!\n");
+  else
+      printf("Result is wrong!\n");
 
   //
   // Your own sparse implementation
