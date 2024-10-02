@@ -1,7 +1,0 @@
-gcc timer.c -c && gcc spmv.c -c && gcc my_dense.c -c && gcc my_sparse.c -c
-gcc my_sparse.o my_dense.o spmv.o timer.o -lopenblas -o spmv
-sudo apt-get install libopenblas-dev
-
-gcc timer.c -c && gcc spmv.c -c && gcc my_dense.c -c && gcc my_sparse.c -c && gcc my_sparse.o my_dense.o spmv.o timer.o -lopenblas -o spmv && ./spmv
-
-test

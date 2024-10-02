@@ -1,14 +1,7 @@
 #include "spmv.h"
+#include "my_sparse.h"
 #include <stdio.h>
 #include <stdlib.h>
-typedef struct {
-    unsigned int *row_offsets;
-    unsigned int *column_indices;
-    double *values;
-    unsigned int size_row_offsets;
-    unsigned int size_column_indices_values;
-
-} CSR;
 
 CSR convert_dense_to_CSR(const unsigned int n, const double mat[]){
     CSR csr;
@@ -64,16 +57,14 @@ void free_CSR(CSR *csr) {
     free(csr->values);
 }
 
-int my_sparse(const unsigned int n, const double mat[], double vec[], double result[]) {
-    CSR csr = convert_dense_to_CSR(n, mat);
+int my_sparse(CSR *csr, double vec[], double result[]) {
     // Go through all rows
-    for (unsigned int i = 0; i < csr.size_row_offsets - 1; i++) {
+    for (unsigned int i = 0; i < csr->size_row_offsets - 1; i++) {
         result[i] = 0.0;
         // Go through all columns of each row
-        for (unsigned int j = csr.row_offsets[i]; j < csr.row_offsets[i + 1]; j++) {
-            result[i] += csr.values[j] * vec[csr.column_indices[j]]; // Select the column shortcut
+        for (unsigned int j = csr->row_offsets[i]; j < csr->row_offsets[i + 1]; j++) {
+            result[i] += csr->values[j] * vec[csr->column_indices[j]]; // Select the column shortcut
         }
     }
-    free_CSR(&csr);
     return 0;
 }

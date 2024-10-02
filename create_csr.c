@@ -1,14 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-typedef struct {
-    unsigned int *row_offsets;
-    unsigned int *column_indices;
-    double *values;
-    unsigned int size_row_offsets;
-    unsigned int size_column_indices_values;
-
-} CSR;
-
+#include "timer.h"
+#include "spmv.h"
+#include "my_sparse.h"
 CSR convert_dense_to_CSR(const unsigned int n, const double mat[]){
     CSR csr;
     // Count the number of values in the matrix to create the arrays
@@ -38,6 +32,25 @@ CSR convert_dense_to_CSR(const unsigned int n, const double mat[]){
     csr.row_offsets[n] = buffer;
     return csr;
 }
+
+double* convert_CSR_to_dense(const CSR csr, unsigned int n) {
+    double *mat = (double *) calloc(n * n, sizeof(double));
+    // Fill the matrix with 0.0.
+    for (unsigned  int i = 0; i < n; i ++){
+        for (unsigned int j = 0; j < n; j++){
+            mat[i * n + j] = 0.0;
+        }
+    }
+    // Go through all rows
+    for (unsigned int i = 0; i < n; i++) {
+        // Go through all columns of each row
+        for (unsigned int j = csr.row_offsets[i]; j < csr.row_offsets[i + 1]; j++) {
+            mat[i * n + csr.column_indices[j]] = csr.values[j];
+        }
+    }
+    return mat;
+}
+
 void free_CSR(CSR *csr) {
     free(csr->row_offsets);
     free(csr->column_indices);

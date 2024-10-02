@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <cblas.h>
-//#include <suitesparse/cs.h>
+#include <suitesparse/cs.h>
 #include <string.h>
 #include <unistd.h>
 #include "timer.h"
 #include "spmv.h"
+#include "my_sparse.h"
 
 #define DEFAULT_SIZE 1024
 #define DEFAULT_DENSITY 0.25
@@ -53,6 +54,12 @@ unsigned int check_result(double ref[], double result[], unsigned int size)
   }
 
   return 1;
+}
+
+void reset_mysol(unsigned int n, double result[]){
+    for (unsigned int i = 0; i < n; i++){
+        result[i] = 0.0;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -104,30 +111,38 @@ int main(int argc, char *argv[])
     printf("Result is ok!\n");
   else
     printf("Result is wrong!\n");
-
+  reset_mysol(size, mysol);
   //
   // Let's try now SpmV: Sparse Matrix - Dense Vector computation
   //
-  my_sparse(size, mat, vec, mysol);
   // Convert mat to a sparse format: CSR
-
+  //
   //
   // Sparse computation using CSPARSE
   //
-
   timestamp(&now);
-  printf("Time taken by my dense matrix - vector product: %ld ms\n", diff_milli(&start, &now));
+
+  printf("Time taken by SpmV: Spare MAtrix matrix - vector product: %ld ms\n", diff_milli(&start, &now));
 
   if (check_result(refsol, mysol, size) == 1)
       printf("Result is ok!\n");
   else
       printf("Result is wrong!\n");
-
+  reset_mysol(size, mysol);
   //
   // Your own sparse implementation
   //
+  CSR per_mat_csr = convert_dense_to_CSR(size, mat);
 
   // Compare times (and computation correctness!)
+  timestamp(&now);
+  my_sparse(&per_mat_csr, vec, mysol);
+  printf("Time taken by my sparse matrix - vector product: %ld ms\n", diff_milli(&start, &now));
 
+  if (check_result(refsol, mysol, size) == 1)
+      printf("Result is ok!\n");
+  else
+      printf("Result is wrong!\n");
+  reset_mysol(size, mysol);
   return 0;
 }
