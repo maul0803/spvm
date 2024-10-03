@@ -3,6 +3,14 @@
 #include "timer.h"
 #include "spmv.h"
 #include "my_sparse.h"
+#include <stdbool.h>
+#include "spmv.h"
+#include "my_sparse.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "timer.h"
+#include "spmv.h"
+#include <stdbool.h>
 CSR convert_dense_to_CSR(const unsigned int n, const double mat[]){
     CSR csr;
     // Count the number of values in the matrix to create the arrays
@@ -19,37 +27,29 @@ CSR convert_dense_to_CSR(const unsigned int n, const double mat[]){
     csr.size_row_offsets = size_row_offsets;
     csr.size_column_indices_values = size_column_indices_values;
     unsigned int buffer = 0;
+    bool is_first_element = true;
     for (unsigned int i = 0; i < n; i++){
-        csr.row_offsets[i] = buffer;
         for (unsigned int j = 0; j < n ; j++){
             if (mat[i * n + j] !=0){
+                if (is_first_element){// The first element of the row
+                    csr.row_offsets[i] = buffer;
+                    is_first_element = false;
+                }
                 csr.column_indices[buffer] = j;
                 csr.values[buffer] = mat[i * n + j];
                 buffer ++;
             }
         }
+        if (is_first_element){//The row is empty
+            csr.row_offsets[i] = csr.row_offsets[i-1];
+        }
+        is_first_element = true;
     }
     csr.row_offsets[n] = buffer;
     return csr;
 }
 
-double* convert_CSR_to_dense(const CSR csr, unsigned int n) {
-    double *mat = (double *) calloc(n * n, sizeof(double));
-    // Fill the matrix with 0.0.
-    for (unsigned  int i = 0; i < n; i ++){
-        for (unsigned int j = 0; j < n; j++){
-            mat[i * n + j] = 0.0;
-        }
-    }
-    // Go through all rows
-    for (unsigned int i = 0; i < n; i++) {
-        // Go through all columns of each row
-        for (unsigned int j = csr.row_offsets[i]; j < csr.row_offsets[i + 1]; j++) {
-            mat[i * n + csr.column_indices[j]] = csr.values[j];
-        }
-    }
-    return mat;
-}
+
 
 void free_CSR(CSR *csr) {
     free(csr->row_offsets);
@@ -77,16 +77,59 @@ void print_CSR(const CSR *csr, const unsigned int n) {
     printf("\n\n");
 }
 
-int main() {
-    unsigned int n = 4;
-    //https://www.researchgate.net/figure/A-sparse-matrix-and-its-CSR-format_fig1_273788746
-    double mat[] = {
-            1.0, 0.0, 2.0, 0.0,
-            0.0, 0.0, 0.0, 0.0,
-            1.0, 0.0, 2.0, 3.0,
-            0.0, 1.0, 0.0, 2.0
-    };
+int my_sparse(CSR *csr, double vec[], double result[]) {
+    // Go through all rows
+    unsigned int index_column_start = 0;
+    unsigned int buffer = 1;
+    unsigned int index_column_end = csr->row_offsets[buffer];
+    //  Initialisation
+    while (index_column_start == index_column_end){
+        buffer++;
+        index_column_end = csr->row_offsets[buffer];
+    }
+    for (unsigned int j = index_column_start; j < index_column_end; j++) {
+        result[0] += csr->values[j] * vec[csr->column_indices[j]]; // Select the column shortcut
+    }
+    for (unsigned int i = 1; i < csr->size_row_offsets - 1; i++) {
+        result[i] = 0.0;
+        printf("row_offsets[i-1]: %.2u | row_offsets[i]: %.2u | i: %d\n", csr->row_offsets[i-1], csr->row_offsets[i], i);
+        if (csr->row_offsets[i-1]!=csr->row_offsets[i]){
+            buffer = i+1;
+            index_column_start = csr->row_offsets[i];
+            index_column_end = csr->row_offsets[buffer];
+            // Go through all columns of each row
+            while (index_column_start == index_column_end){
+                buffer++;
+                index_column_end = csr->row_offsets[buffer];
+            }
+            printf("index_column_start: %d, index_column_end: %d\n", index_column_start, index_column_end);
+            for (unsigned int j = index_column_start; j < index_column_end; j++) {
+                result[i] += csr->values[j] * vec[csr->column_indices[j]]; // Select the column shortcut
+            }
+        }
+    }
+    return 0;
+}
 
+int main() {
+    unsigned int n = 5;
+    //https://www.researchgate.net/figure/A-sparse-matrix-and-its-CSR-format_fig1_273788746 (deprecated)
+    //https://docs.nvidia.com/nvpl/_static/sparse/storage_format/sparse_matrix.html
+    double mat_[] = {
+            0.0, 0.3, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0,
+            4.0, 5.0, 0.0, 0.0,
+            0.0, 6.0, 7.0, 8.0
+    };
+    double mat[] = {
+            1.0, 0.0, 2.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0,
+            4.0, 5.0, 0.0, 0.0, 0.0,
+            0.0, 6.0, 7.0, 8.0, 0.0
+    };
+    double vec[] = {1.0, 1.0, 1.0, 1.0};
+    double result[] = {0.0, 0.0, 0.0, 0.0};
     printf("Dense Matrix (%u x %u):\n", n, n);
     for (unsigned int i = 0; i < n; i++) {
         for (unsigned int j = 0; j < n; j++) {
@@ -97,6 +140,13 @@ int main() {
     printf("\n");
     CSR csr = convert_dense_to_CSR(n, mat);
     print_CSR(&csr, n);
+
+    my_sparse(&csr, vec, result);
+    for (unsigned int i = 0; i < n; i++) {
+        printf("%.2f\n", result[i]);
+    }
     free_CSR(&csr);
     return 0;
 }
+
+

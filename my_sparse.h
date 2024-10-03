@@ -13,8 +13,8 @@ typedef struct {
     unsigned int size_column_indices_values;
 } CSR;
 
-CSR convert_dense_to_CSR(const unsigned int n, const double mat[]);
-double* convert_CSR_to_dense(const CSR csr, unsigned int n);
+CSR convert_dense_to_CSR(unsigned int n, const double mat[]);
+double* convert_CSR_to_dense(CSR csr, unsigned int n);
 void free_CSR(CSR *csr);
 int my_sparse(CSR *csr, double vec[], double result[]);
 
