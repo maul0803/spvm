@@ -8,7 +8,7 @@
 #include "spmv.h"
 #include "my_sparse.h"
 #define DEFAULT_SIZE 1024
-#define DEFAULT_DENSITY 0.0
+#define DEFAULT_DENSITY 25.0
 
 unsigned int populate_sparse_matrix(double mat[], unsigned int n, double density, unsigned int seed)
 {

@@ -6,7 +6,7 @@ BUILD = release
 
 # Compiler flags for release mode
 ifeq ($(BUILD),release)
-    CFLAGS = -c -Wall -Wextra -Ofast #Ofast for  speed (less accuracy)
+    CFLAGS = -c -Wall -Wextra #-Ofast #Ofast for  speed (less accuracy)
 else
     CFLAGS = -g -O0 -c -Wall -Wextra #g for Debug
 endif
