@@ -145,13 +145,11 @@ int main(int argc, char *argv[])
   gsl_spmatrix *gsl_csr = gsl_spmatrix_crs(gsl_coo);
   // Multiply the matrix and the vector
   gsl_vector *gsl_mysol = gsl_vector_calloc(size);
+  // Results
   timestamp(&start);
   gsl_spblas_dgemv(CblasNoTrans, 1, gsl_csr, gsl_vec, 0, gsl_mysol);
   timestamp(&now);
-
-  printf("Time taken by my own sparse matrix - vector product: %ld ms\n", diff_milli(&start, &now));
-
-
+  printf("Time taken by SpMV sparse matrix - vector product: %ld ms\n", diff_milli(&start, &now));
 
   // Initialisation of the solution
   for (int i = 0; i < size; i++){
@@ -164,7 +162,6 @@ int main(int argc, char *argv[])
       printf("Result SpMV spare implementation is wrong!\n");
 
 
-
   // Your own sparse implementation
   //
   printf("\nMy Own Spare computation\n----------------\n");
@@ -174,7 +171,6 @@ int main(int argc, char *argv[])
   timestamp(&start);
   my_sparse(&per_mat_csr, vec, mysol);
   timestamp(&now);
-
   printf("Time taken by my own sparse matrix - vector product: %ld ms\n", diff_milli(&start, &now));
   if (check_result(refsol, mysol, size) == 1)
       printf("Result own spare implementation is ok!\n");

@@ -13,7 +13,7 @@ CSR convert_dense_to_CSR(const unsigned int n, const double mat[]){
             size_column_indices_values++;
         }
     }
-    csr.row_offsets = (unsigned int *)malloc((size_row_offsets) * sizeof(unsigned int)); // n+1 pour le dernier offset
+    csr.row_offsets = (unsigned int *)malloc((size_row_offsets) * sizeof(unsigned int)); // n+1 for the last offset
     csr.column_indices = (unsigned int *)malloc(size_column_indices_values * sizeof(unsigned int));
     csr.values = (double *)malloc(size_column_indices_values * sizeof(double));
     csr.size_row_offsets = size_row_offsets;
